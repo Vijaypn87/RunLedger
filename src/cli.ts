@@ -8,6 +8,8 @@ import { status } from "./commands/status.js";
 import { report } from "./commands/report.js";
 import { list } from "./commands/list.js";
 import { open } from "./commands/open.js";
+import { hook } from "./commands/hook.js";
+import { hooksInstall, hooksUninstall } from "./commands/hooks-install.js";
 
 const program = new Command();
 
@@ -62,6 +64,27 @@ program
   .description("Open a run's report in the default browser.")
   .argument("<run-id>", "Run id from `runledger list`.")
   .action((id: string) => open(process.cwd(), id));
+
+program
+  .command("hook")
+  .description("Entry point for Claude Code hooks (reads the event JSON from stdin).")
+  .action(() => hook());
+
+const hooksCmd = program
+  .command("hooks")
+  .description("Record Claude Code sessions automatically via its hooks.");
+
+hooksCmd
+  .command("install")
+  .description("Add RunLedger hooks to .claude/settings.local.json in this project.")
+  .option("--shared", "Write to .claude/settings.json (committed, shared with the team) instead.")
+  .action((opts: { shared?: boolean }) => hooksInstall(process.cwd(), opts));
+
+hooksCmd
+  .command("uninstall")
+  .description("Remove RunLedger hooks from the Claude Code settings.")
+  .option("--shared", "Remove from .claude/settings.json instead.")
+  .action((opts: { shared?: boolean }) => hooksUninstall(process.cwd(), opts));
 
 program.addHelpText(
   "after",

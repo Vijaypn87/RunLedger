@@ -6,7 +6,7 @@
 
 Local-first audit reports for AI coding-agent sessions.
 
-[![Tests](https://img.shields.io/badge/tests-60%20passing-2f7bff?style=for-the-badge&labelColor=05070f)](#-testing)
+[![Tests](https://img.shields.io/badge/tests-68%20passing-2f7bff?style=for-the-badge&labelColor=05070f)](#-testing)
 [![Node](https://img.shields.io/badge/node-%E2%89%A518-2f7bff?style=for-the-badge&labelColor=05070f&logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-2f7bff?style=for-the-badge&labelColor=05070f&logo=typescript&logoColor=white)](./tsconfig.json)
 [![License](https://img.shields.io/badge/license-MIT-2f7bff?style=for-the-badge&labelColor=05070f)](./LICENSE)
@@ -114,10 +114,28 @@ Sample output of `runledger stop`:
   Open it: runledger open run_20261120T071848Z_gxjbis
 ```
 
+### Automatic recording with Claude Code
+
+Skip `start`, `run` and `stop` entirely: let Claude Code's hooks drive RunLedger.
+
+```bash
+runledger hooks install             # in your project; writes .claude/settings.local.json
+```
+
+From then on every Claude Code session in that project is recorded:
+
+| Claude Code event | RunLedger does |
+| :-- | :-- |
+| `SessionStart` | starts a run (a resumed session keeps the open run) |
+| `PostToolUse` / `PostToolUseFailure` (Bash) | records the command, output, duration and exit code |
+| `SessionEnd` | finalizes the run and writes the report |
+
+Use `--shared` to write `.claude/settings.json` instead (committed, so teammates need RunLedger installed). `runledger hooks uninstall` removes only RunLedger's entries. The hook never blocks or fails the agent: on any error it logs to stderr and exits 0.
+
 ## ◆ Testing
 
 ```bash
-npm test            # 60 tests across 8 files
+npm test            # 68 tests across 9 files
 npm run build
 npm run typecheck
 ```
