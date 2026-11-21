@@ -135,3 +135,23 @@ describe("detectRisks", () => {
     expect([...levels].sort((a, b) => order(a) - order(b))).toEqual(levels);
   });
 });
+
+describe("secret-like file detection", () => {
+  const flagged = (path: string) =>
+    detectRisks(makeRun({ changedFiles: [file(path)] })).some(
+      (r) => r.title === "Secret-like file touched",
+    );
+
+  it("flags real secret files", () => {
+    expect(flagged(".env")).toBe(true);
+    expect(flagged(".env.local")).toBe(true);
+    expect(flagged("config/secrets.json")).toBe(true);
+    expect(flagged("app-secret.yaml")).toBe(true);
+  });
+
+  it("does not flag templates or unrelated names", () => {
+    expect(flagged(".env.example")).toBe(false);
+    expect(flagged(".env.sample")).toBe(false);
+    expect(flagged("src/secretary.ts")).toBe(false);
+  });
+});

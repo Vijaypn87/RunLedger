@@ -4,6 +4,10 @@ import { resolvePaths } from "../config.js";
 import { listFinalizedRunIds } from "../core/storage.js";
 
 export function open(cwd: string, id: string): void {
+  if (!/^run_[A-Za-z0-9_]+$/.test(id)) {
+    console.error(`Invalid run id: ${id}`);
+    process.exit(1);
+  }
   const p = resolvePaths(cwd);
   const path = p.reportHtml(id);
   if (!existsSync(path)) {
@@ -23,8 +27,10 @@ export function open(cwd: string, id: string): void {
     cmd = "open";
     args = [path];
   } else if (platform === "win32") {
-    cmd = "cmd";
-    args = ["/c", "start", "", path];
+    // explorer.exe opens the file with its default app without going through
+    // cmd.exe, which would interpret characters like & in the path.
+    cmd = "explorer.exe";
+    args = [path];
   } else {
     cmd = "xdg-open";
     args = [path];

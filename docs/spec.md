@@ -48,7 +48,7 @@ Captures at start time:
 ### 1.3 `run -- <command>`
 Executes the command **through the user's shell** via `spawn(cmd, { shell: true })`. This is intentional so users can pipe, chain, and use shell features.
 
-> **Note in the docs and `--help` output:** `runledger run -- <command>` runs the command through your shell (`/bin/sh -c "..."` on Unix, `cmd.exe /d /s /c` on Windows). Quoting follows shell rules.
+> **Note in the docs and `--help` output:** `runledger run -- <command>` runs the command through your shell (`/bin/sh -c "..."` on Unix, `cmd.exe /d /s /c` on Windows). Multiple arguments are re-quoted so each stays one argument; a single argument is passed to the shell verbatim, so `"a && b"` keeps its shell meaning.
 
 While running:
 - stdout streams to the user's terminal in real time

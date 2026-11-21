@@ -8,6 +8,8 @@ export interface GitSnapshot {
   fullDiffHead?: string;
   fullDiffTail?: string;
   fullDiffBytes: number;
+  /** Git blob id of each dirty file (or "<missing>"), keyed by path. */
+  fileHashes?: Record<string, string>;
 }
 
 export interface CommandEvent {
@@ -53,6 +55,8 @@ export interface RunLedgerRun {
   finalGit?: GitSnapshot;
   commands: CommandEvent[];
   changedFiles: ChangedFile[];
+  /** Files already modified before the session and left untouched by it. */
+  preExistingChanges?: ChangedFile[];
   risks: RiskFlag[];
   markdownSummary?: string;
   reportPath?: string;

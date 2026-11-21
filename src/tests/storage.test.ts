@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mkdtempSync, rmSync, existsSync } from "node:fs";
+import { mkdtempSync, rmSync, existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -134,6 +134,20 @@ describe("session lock", () => {
       ).toThrow("boom");
       expect(existsSync(join(dir, ".runledger", "active.lock"))).toBe(false);
       expect(withSessionLock(dir, () => 42)).toBe(42);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("ensureRoot", () => {
+  it("writes a .gitignore so recordings are never committed", () => {
+    const dir = mkdtempSync(join(tmpdir(), "rl-root-"));
+    try {
+      writeActive(dir, { ...sampleRun, commands: [] });
+      const ignore = join(dir, ".runledger", ".gitignore");
+      expect(existsSync(ignore)).toBe(true);
+      expect(readFileSync(ignore, "utf8")).toMatch(/^\*$/m);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

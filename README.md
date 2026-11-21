@@ -6,10 +6,10 @@
 
 Local-first audit reports for AI coding-agent sessions.
 
-[![Tests](https://img.shields.io/badge/tests-41%20passing-2f7bff?style=for-the-badge&labelColor=05070f)](#-testing)
+[![Tests](https://img.shields.io/badge/tests-60%20passing-2f7bff?style=for-the-badge&labelColor=05070f)](#-testing)
 [![Node](https://img.shields.io/badge/node-%E2%89%A518-2f7bff?style=for-the-badge&labelColor=05070f&logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-2f7bff?style=for-the-badge&labelColor=05070f&logo=typescript&logoColor=white)](./tsconfig.json)
-[![License](https://img.shields.io/badge/license-MIT-2f7bff?style=for-the-badge&labelColor=05070f)](#-license)
+[![License](https://img.shields.io/badge/license-MIT-2f7bff?style=for-the-badge&labelColor=05070f)](./LICENSE)
 
 [**Live Demo**](https://runledger-web.vercel.app/) &nbsp;·&nbsp; [**GitHub**](https://github.com/Vijaypn87/RunLedger) &nbsp;·&nbsp; [**Quick start**](#-installation)
 
@@ -27,7 +27,7 @@ RunLedger records the session from your terminal and writes one self-contained H
 
 | ● **Session recording** | ▸ **Command tracking** | ⑂ **Git change tracking** |
 | :-- | :-- | :-- |
-| `start` / `stop` bracket a session and snapshot git state at both ends. The active session survives a crash. | `run -- <cmd>` executes through your shell, streams output live, and records exit code, duration and a 4 KB head and tail of stdout and stderr. | Changed files by status, `git diff --stat` and the full diff. Diffs over 256 KB are stored as head and tail with a truncation marker. |
+| `start` / `stop` bracket a session and snapshot git state at both ends. The active session survives a crash. | `run -- <cmd>` executes through your shell, streams output live, and records exit code, duration and a 4 KB head and tail of stdout and stderr. | Files changed during the session (already-dirty files left untouched are excluded), `git diff --stat` and the full diff against `HEAD`, staged or not. Diffs over 256 KB are stored as head and tail with a truncation marker. |
 
 | ⚠ **Risk detection** | ✓ **Test command tracking** | ▤ **HTML audit report** |
 | :-- | :-- | :-- |
@@ -87,7 +87,7 @@ npm run build
 npm link            # makes the `runledger` command available
 ```
 
-Add `.runledger/` to your project's `.gitignore`; recordings are local artifacts.
+RunLedger writes a `.gitignore` inside `.runledger/`, so recordings (which can contain command output and diffs) are never committed.
 
 ## ◆ Usage
 
@@ -103,7 +103,7 @@ runledger open <run-id>             # open a report in your browser
 runledger status                    # live state of the active session
 ```
 
-`runledger run -- <cmd>` executes through your shell (`/bin/sh -c` on Unix, `cmd.exe` on Windows) and exits with the command's own exit code.
+`runledger run -- <cmd>` executes through your shell (`/bin/sh -c` on Unix, `cmd.exe` on Windows) and exits with the command's own exit code. Arguments keep their quoting (`runledger run -- echo "a b"` passes `a b` as one argument); to use shell operators, pass one quoted string: `runledger run -- "npm test && npm run build"`. Ctrl-C stops the command and it is still recorded.
 
 Sample output of `runledger stop`:
 
@@ -117,7 +117,7 @@ Sample output of `runledger stop`:
 ## ◆ Testing
 
 ```bash
-npm test            # 41 tests across 5 files
+npm test            # 60 tests across 8 files
 npm run build
 npm run typecheck
 ```

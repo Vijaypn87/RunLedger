@@ -33,6 +33,20 @@ function ensureDir(d: string) {
   mkdirSync(d, { recursive: true });
 }
 
+/**
+ * Create .runledger/ with a `.gitignore` of `*`, so recordings (which can hold
+ * command output and diffs with secrets) are never committed by accident.
+ */
+export function ensureRoot(cwd: string): string {
+  const root = runledgerRoot(cwd);
+  ensureDir(root);
+  const ignore = join(root, ".gitignore");
+  if (!existsSync(ignore)) {
+    writeFileSync(ignore, "# Created by RunLedger: keep recordings out of git.\n*\n", "utf8");
+  }
+  return root;
+}
+
 function atomicWrite(path: string, contents: string) {
   const tmp = `${path}.${process.pid}.tmp`;
   writeFileSync(tmp, contents, "utf8");
@@ -48,6 +62,7 @@ export function runDir(cwd: string, id: string): string {
 }
 
 export function writeRun(cwd: string, run: RunLedgerRun): void {
+  ensureRoot(cwd);
   const dir = runDir(cwd, run.id);
   ensureDir(dir);
   atomicWrite(join(dir, "run.json"), serializeRun(run));
@@ -59,7 +74,7 @@ export function readRun(cwd: string, id: string): RunLedgerRun {
 }
 
 export function writeActive(cwd: string, run: RunLedgerRun): void {
-  ensureDir(runledgerRoot(cwd));
+  ensureRoot(cwd);
   atomicWrite(join(runledgerRoot(cwd), "active.json"), serializeRun(run));
 }
 
@@ -102,7 +117,7 @@ function sleepSync(ms: number): void {
  * A lock older than LOCK_STALE_MS is assumed to belong to a crashed process.
  */
 export function withSessionLock<T>(cwd: string, fn: () => T): T {
-  ensureDir(runledgerRoot(cwd));
+  ensureRoot(cwd);
   const lock = join(runledgerRoot(cwd), "active.lock");
   const deadline = Date.now() + LOCK_TIMEOUT_MS;
   for (;;) {
