@@ -51,4 +51,4 @@ runledger open <run-id>
 
 ## License
 
-MIT
+Released under the [MIT License](LICENSE). Free to use, modify and distribute.
