@@ -3,6 +3,8 @@ import { constants } from "node:os";
 import { readActive, appendCommand } from "../core/storage.js";
 import type { CommandEvent } from "../core/types.js";
 import { STDIO_HEAD_TAIL_BYTES } from "../core/types.js";
+import { utf8Head, utf8Tail } from "../core/bytes.js";
+import { buildCommand } from "../core/shell.js";
 
 function captureHeadTail(
   buf: Buffer,
@@ -13,8 +15,8 @@ function captureHeadTail(
     return { head: buf.toString("utf8"), tail: "", bytes, truncated: false };
   }
   return {
-    head: buf.subarray(0, cap).toString("utf8"),
-    tail: buf.subarray(bytes - cap).toString("utf8"),
+    head: utf8Head(buf, cap),
+    tail: utf8Tail(buf, cap),
     bytes,
     truncated: true,
   };
@@ -30,7 +32,7 @@ export async function run(cwd: string, commandArgs: string[]): Promise<void> {
     console.error("Usage: runledger run -- <command>");
     process.exit(1);
   }
-  const cmdString = commandArgs.join(" ");
+  const cmdString = buildCommand(commandArgs);
   const startIso = new Date().toISOString();
   const startMs = Date.now();
 

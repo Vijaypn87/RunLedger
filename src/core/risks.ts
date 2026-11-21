@@ -18,9 +18,12 @@ function basename(p: string): string {
 
 function isEnvLike(path: string): boolean {
   const base = basename(path);
+  // Checked-in templates such as .env.example hold no real secrets.
+  if (/\.(example|sample|template|dist)$/i.test(base)) return false;
   if (/^\.env(\..*)?$/.test(base)) return true;
   if (/credentials/i.test(base)) return true;
-  if (/secret/i.test(base)) return true;
+  // "secret" / "secrets" as a whole name segment, not inside e.g. "secretary".
+  if (/(^|[._-])secrets?([._-]|$)/i.test(base)) return true;
   if (/\.pem$/i.test(base)) return true;
   return false;
 }

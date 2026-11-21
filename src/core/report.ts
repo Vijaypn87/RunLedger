@@ -375,6 +375,14 @@ function renderFullDiff(run: RunLedgerRun): string {
     </details>`;
 }
 
+function preExistingNote(run: RunLedgerRun): string {
+  const pre = run.preExistingChanges ?? [];
+  if (pre.length === 0) return "";
+  return `<details class="note"><summary class="dim">${pre.length} file(s) were already modified before this session and left unchanged; not counted above.</summary><ul>${pre
+    .map((f) => `<li><code>${esc(f.path)}</code></li>`)
+    .join("")}</ul></details>`;
+}
+
 function renderGit(run: RunLedgerRun): string {
   const files = run.changedFiles;
   const filesBody =
@@ -408,7 +416,7 @@ function renderGit(run: RunLedgerRun): string {
   return `<section id="git" class="panel-section">
     <h2>${icon("git")}Git changes <span class="count">${files.length}</span></h2>
     <div class="grid2">
-      <article class="card"><h3>Changed files</h3>${filesBody}</article>
+      <article class="card"><h3>Changed files</h3>${filesBody}${preExistingNote(run)}</article>
       <article class="card"><h3>Diff stat</h3>${statBody}</article>
     </div>
     ${renderFullDiff(run) || `<article class="card"><h3>Full diff</h3>${empty("No diff to show", "There is no tracked-file diff for this run.")}</article>`}

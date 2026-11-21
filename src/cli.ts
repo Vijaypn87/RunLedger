@@ -69,7 +69,8 @@ program.addHelpText(
 Notes:
   runledger run -- <command>  executes through your shell
                               (\`/bin/sh -c "..."\` on Unix, \`cmd.exe /d /s /c\` on Windows).
-                              Quote and escape per your shell's rules.
+                              Arguments keep their quoting; pass one quoted string
+                              to use shell operators: runledger run -- "a && b"
 
 Examples:
   $ runledger init
