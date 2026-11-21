@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -10,6 +10,8 @@ import {
   writeActive,
   readActive,
   clearActive,
+  appendCommand,
+  withSessionLock,
 } from "../core/storage.js";
 import type { RunLedgerRun, GitSnapshot } from "../core/types.js";
 
@@ -75,6 +77,63 @@ describe("storage I/O", () => {
       expect(readActive(dir)?.id).toBe(sampleRun.id);
       clearActive(dir);
       expect(readActive(dir)).toBeNull();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("session lock", () => {
+  const cmd = (command: string) => ({
+    command,
+    startTime: "2026-01-01T00:00:00Z",
+    endTime: "2026-01-01T00:00:01Z",
+    durationMs: 1000,
+    exitCode: 0,
+    stdoutHead: "",
+    stdoutTail: "",
+    stderrHead: "",
+    stderrTail: "",
+    stdoutBytes: 0,
+    stderrBytes: 0,
+    truncated: false,
+  });
+
+  it("appendCommand keeps events written by other processes", () => {
+    const dir = mkdtempSync(join(tmpdir(), "rl-lock-"));
+    try {
+      writeActive(dir, { ...sampleRun, commands: [] });
+      // Simulates two runs that both read the session before either finished.
+      expect(appendCommand(dir, sampleRun.id, cmd("a"))).toBe(true);
+      expect(appendCommand(dir, sampleRun.id, cmd("b"))).toBe(true);
+      expect(readActive(dir)?.commands.map((c) => c.command)).toEqual(["a", "b"]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("appendCommand does not resurrect a stopped session", () => {
+    const dir = mkdtempSync(join(tmpdir(), "rl-lock-"));
+    try {
+      writeActive(dir, { ...sampleRun, commands: [] });
+      clearActive(dir);
+      expect(appendCommand(dir, sampleRun.id, cmd("late"))).toBe(false);
+      expect(readActive(dir)).toBeNull();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("withSessionLock releases the lock after an error", () => {
+    const dir = mkdtempSync(join(tmpdir(), "rl-lock-"));
+    try {
+      expect(() =>
+        withSessionLock(dir, () => {
+          throw new Error("boom");
+        }),
+      ).toThrow("boom");
+      expect(existsSync(join(dir, ".runledger", "active.lock"))).toBe(false);
+      expect(withSessionLock(dir, () => 42)).toBe(42);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

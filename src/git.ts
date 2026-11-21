@@ -8,6 +8,7 @@ function tryGit(cwd: string, args: string[]): string {
       cwd,
       encoding: "utf8",
       maxBuffer: 64 * 1024 * 1024,
+      stdio: ["ignore", "pipe", "ignore"],
     }).toString();
   } catch {
     return "";
@@ -41,16 +42,27 @@ export function getStatusShort(cwd: string): string {
   return tryGit(cwd, ["status", "--short"]);
 }
 
-export function getDiffStat(cwd: string): string {
-  return tryGit(cwd, ["diff", "--stat"]);
+// Git's well-known empty tree object, used as the diff base before the first commit.
+const EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
+
+/**
+ * Base to diff the working tree against. Diffing against HEAD (not the index)
+ * includes both staged and unstaged changes to tracked files.
+ */
+export function diffBase(cwd: string): string {
+  return tryGit(cwd, ["rev-parse", "--verify", "--quiet", "HEAD"]).trim() || EMPTY_TREE;
 }
 
-export function getDiffNameStatus(cwd: string): string {
-  return tryGit(cwd, ["diff", "--name-status"]);
+export function getDiffStat(cwd: string, base = diffBase(cwd)): string {
+  return tryGit(cwd, ["diff", base, "--stat"]);
 }
 
-export function getFullDiff(cwd: string): string {
-  return tryGit(cwd, ["diff"]);
+export function getDiffNameStatus(cwd: string, base = diffBase(cwd)): string {
+  return tryGit(cwd, ["diff", base, "--name-status"]);
+}
+
+export function getFullDiff(cwd: string, base = diffBase(cwd)): string {
+  return tryGit(cwd, ["diff", base]);
 }
 
 export function takeSnapshot(cwd: string): GitSnapshot {
@@ -65,15 +77,16 @@ export function takeSnapshot(cwd: string): GitSnapshot {
       fullDiffBytes: 0,
     };
   }
-  const fullDiff = getFullDiff(cwd);
+  const base = diffBase(cwd);
+  const fullDiff = getFullDiff(cwd, base);
   const buf = Buffer.from(fullDiff, "utf8");
   const bytes = buf.length;
   if (bytes > DIFF_TRUNCATE_THRESHOLD_BYTES) {
     return {
       isGitRepo: true,
       statusShort: getStatusShort(cwd),
-      diffStat: getDiffStat(cwd),
-      diffNameStatus: getDiffNameStatus(cwd),
+      diffStat: getDiffStat(cwd, base),
+      diffNameStatus: getDiffNameStatus(cwd, base),
       fullDiff: "",
       fullDiffTruncated: true,
       fullDiffHead: buf.subarray(0, DIFF_HEAD_TAIL_BYTES).toString("utf8"),
@@ -84,8 +97,8 @@ export function takeSnapshot(cwd: string): GitSnapshot {
   return {
     isGitRepo: true,
     statusShort: getStatusShort(cwd),
-    diffStat: getDiffStat(cwd),
-    diffNameStatus: getDiffNameStatus(cwd),
+    diffStat: getDiffStat(cwd, base),
+    diffNameStatus: getDiffNameStatus(cwd, base),
     fullDiff,
     fullDiffTruncated: false,
     fullDiffBytes: bytes,
