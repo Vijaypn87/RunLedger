@@ -6,7 +6,7 @@ import { STDIO_HEAD_TAIL_BYTES } from "../core/types.js";
 import { utf8Head, utf8Tail } from "../core/bytes.js";
 import { buildCommand } from "../core/shell.js";
 
-function captureHeadTail(
+export function captureHeadTail(
   buf: Buffer,
   cap: number,
 ): { head: string; tail: string; bytes: number; truncated: boolean } {

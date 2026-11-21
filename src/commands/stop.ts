@@ -7,15 +7,20 @@ import { renderMarkdown } from "../core/summary.js";
 import { renderReport } from "../core/report.js";
 import type { RunLedgerRun } from "../core/types.js";
 
-export function stop(cwd: string): void {
+/** Finalize the active session. Returns null if none is active. */
+export function stopSession(cwd: string): RunLedgerRun | null {
   // Hold the lock while finalizing so a command finishing in parallel can't
   // write to the session after it has been read here.
-  const active = withSessionLock(cwd, () => {
+  return withSessionLock(cwd, () => {
     const a = readActive(cwd);
     if (!a) return null;
     finalize(cwd, a);
     return a;
   });
+}
+
+export function stop(cwd: string): void {
+  const active = stopSession(cwd);
   if (!active) {
     console.error("No active RunLedger session.");
     process.exit(1);
