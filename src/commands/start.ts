@@ -7,7 +7,7 @@ import type { RunLedgerRun } from "../core/types.js";
 export function start(cwd: string): void {
   const p = resolvePaths(cwd);
   if (existsSync(p.activePath)) {
-    console.error(`An RunLedger session is already active.`);
+    console.error(`A RunLedger session is already active.`);
     console.error(
       `Run \`runledger stop\` to finalize it, or remove ${p.activePath} to discard it.`,
     );
