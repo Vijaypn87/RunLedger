@@ -132,9 +132,3 @@ Covers risk rules, storage round-trips, Markdown summary, time formatting and re
 - [ ] Configurable risk rules per project
 - [ ] Parse test-runner output into per-test results
 - [ ] Publish to npm
-
-## ◆ License
-
-MIT. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
-
-RunLedger is derived from the MIT-licensed project AgentLens; the original copyright notice is retained in `LICENSE`.
